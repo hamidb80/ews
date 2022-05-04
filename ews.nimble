@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.0"
+version       = "0.1.2"
 author        = "hamidb80"
 description   = "ews/eas utility"
 license       = "MIT"
