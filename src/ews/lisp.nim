@@ -1,4 +1,4 @@
-import std/[strutils, json]
+import std/[strutils, json, macros, sugar, sequtils]
 
 
 type
@@ -32,7 +32,7 @@ func toLispNode*(i: int): LispNode =
   LispNode(kind: lnkInt, vint: i)
 
 func toLispSymbol*(s: string): LispNode =
-  LispNode(kind: lnkString, vstr: s)
+  LispNode(kind: lnkSymbol, name: s)
 
 func newLispList*(s: openArray[LispNode]): LispNode =
   result = LispNode(kind: lnkList)
@@ -149,3 +149,48 @@ func args*(n: LispNode): seq[LispNode] =
   assert n.kind == lnkList
   assert n.children.len > 0
   n.children[1..^1]
+
+
+
+let
+  toLispNodeIdent {.compileTime.} = ident "toLispNode"
+  toLispSymbolIdent {.compileTime.} = ident "toLispSymbol"
+  newLispListIdent {.compileTime.} = ident "newLispList"
+
+proc toLispImpl(nodes: seq[NimNode]): NimNode =
+  result = newCall(newLispListIdent)
+
+  for n in nodes:
+    result.add:
+      case n.kind:
+      of nnkIdent:
+        newCall(toLispSymbolIdent, newlit n.strVal)
+
+      of nnkTupleConstr:
+        toLispImpl n.toseq
+
+      of nnkPar:
+        newCall(newLispListIdent, n[0])
+
+      else:
+        newCall(toLispNodeIdent, n)
+
+macro toLisp*(body): untyped =
+  result = case body.kind:
+  of nnkTupleConstr:
+    toLispImpl body.toseq
+
+  of nnkStmtList:
+    newTree(nnkBracket).add collect do:
+      for n in body:
+        expectKind n, nnkTupleConstr
+        toLispImpl n.toseq
+
+  else:
+    raise newException(ValueError, "expected tupleConstr or stmtList. got: " & $body.kind)
+
+
+echo toLisp (HELLO, 1, (Hey, 2))
+echo toLisp do:
+  (WIRE, 1, 2)
+  (WIRE, 3, 4)
