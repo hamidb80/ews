@@ -22,6 +22,27 @@ type
     of lnkList: children*: seq[LispNode]
 
 
+func toLispNode*(s: string): LispNode =
+  LispNode(kind: lnkString, vstr: s)
+
+func toLispNode*(f: float): LispNode =
+  LispNode(kind: lnkFloat, vfloat: f)
+
+func toLispNode*(i: int): LispNode =
+  LispNode(kind: lnkInt, vint: i)
+
+func toLispSymbol*(s: string): LispNode =
+  LispNode(kind: lnkString, vstr: s)
+
+func newLispList*(s: openArray[LispNode]): LispNode =
+  result = LispNode(kind: lnkList)
+  result.children.add s
+
+func newLispList*(s: varargs[LispNode]): LispNode =
+  result = LispNode(kind: lnkList)
+  result.children.add s
+
+
 func parseLisp(s: ptr string, startI: int, acc: var seq[LispNode]): int =
   ## return the last index that was there
   var
@@ -45,12 +66,12 @@ func parseLisp(s: ptr string, startI: int, acc: var seq[LispNode]): int =
     case state:
     of psString:
       if c == '"' and s[i-1] != '\\':
-        acc.add LispNode(kind: lnkString, vstr: s[temp ..< i])
+        acc.add toLispNode(s[temp ..< i])
         reset()
 
     of psSymbol:
       if c in Whitespace or c == ')':
-        acc.add LispNode(kind: lnkSymbol, name: s[temp ..< i])
+        acc.add toLispSymbol(s[temp ..< i])
         reset()
         checkDone()
 
@@ -60,9 +81,9 @@ func parseLisp(s: ptr string, startI: int, acc: var seq[LispNode]): int =
 
         acc.add:
           if '.' in t:
-            LispNode(kind: lnkFloat, vfloat: parseFloat t)
+            toLispNode parseFloat t
           else:
-            LispNode(kind: lnkInt, vint: parseInt t)
+            toLispNode parseInt t
 
         reset()
         checkDone()
@@ -70,7 +91,7 @@ func parseLisp(s: ptr string, startI: int, acc: var seq[LispNode]): int =
     of psInitial:
       case c:
       of '(':
-        var node = LispNode(kind: lnkList)
+        var node = newLispList()
         i = parseLisp(s, i+1, node.children)
         acc.add node
 
