@@ -188,9 +188,3 @@ macro toLisp*(body): untyped =
 
   else:
     raise newException(ValueError, "expected tupleConstr or stmtList. got: " & $body.kind)
-
-
-echo toLisp (HELLO, 1, (Hey, 2))
-echo toLisp do:
-  (WIRE, 1, 2)
-  (WIRE, 3, 4)

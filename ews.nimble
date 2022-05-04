@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.2.0"
+version       = "0.2.1"
 author        = "hamidb80"
 description   = "ews/eas utility"
 license       = "MIT"
@@ -14,4 +14,4 @@ bin           = @["main"]
 requires "nim >= 1.6.4"
 
 task make, "make exectuable file":
-  exec "nim -o:ews.exe c --mm:arc -d:release ./src/ews/main.nim"
+  exec "nim -o:ews.exe c --mm:arc -d:release ./src/ews.nim"
